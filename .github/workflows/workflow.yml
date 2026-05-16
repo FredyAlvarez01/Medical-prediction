@@ -30,7 +30,7 @@ jobs:
           pip install pytest
 
       - name: Ejecutar pruebas
-              env:
-                PYTHONPATH: .
-              run: |
-                pytest
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest
