@@ -14,7 +14,7 @@ Módulos importados:
 """
 
 from app import predecir_estado
-
+from utils.guardar_prediccion import registrar_prediccion
 
 def test_no_enfermo():
     """
@@ -41,7 +41,9 @@ def test_no_enfermo():
         "dias_sintomas": 0,
         "dolor": 0,
     }
-    assert predecir_estado(datos) == "NO ENFERMO"
+    estado = predecir_estado(datos)
+    assert estado == "NO ENFERMO"
+    registrar_prediccion(estado, datos)
 
 
 def test_enfermedad_leve():
@@ -69,7 +71,9 @@ def test_enfermedad_leve():
         "dias_sintomas": 2,
         "dolor": 3,
     }
-    assert predecir_estado(datos) == "ENFERMEDAD LEVE"
+    estado = predecir_estado(datos)
+    assert estado == "ENFERMEDAD LEVE"
+    registrar_prediccion(estado, datos)
 
 
 def test_enfermedad_aguda():
@@ -97,7 +101,9 @@ def test_enfermedad_aguda():
         "dias_sintomas": 4,
         "dolor": 8,
     }
-    assert predecir_estado(datos) == "ENFERMEDAD AGUDA"
+    estado = predecir_estado(datos)
+    assert estado == "ENFERMEDAD AGUDA"
+    registrar_prediccion(estado, datos)
 
 
 def test_enfermedad_cronica():
@@ -126,9 +132,11 @@ def test_enfermedad_cronica():
         "dias_sintomas": 65,
         "dolor": 5,
     }
-    assert predecir_estado(datos) == "ENFERMEDAD CRÓNICA"
-    
-    
+    estado = predecir_estado(datos)
+    assert estado == "ENFERMEDAD CRÓNICA"
+    registrar_prediccion(estado, datos)
+
+
 def test_enfermedad_terminal():
     """
     Prueba que valida la predicción correcta de una enfermedad terminal.
@@ -143,7 +151,7 @@ def test_enfermedad_terminal():
 
     Returns:
         None: La función ejecuta una aserción que verifica que la predicción
-              sea "ENFERMEDAD terminal".
+              sea "ENFERMEDAD TERMINAL".
 
     Raises:
         AssertionError: Si la predicción no es "ENFERMEDAD TERMINAL".
@@ -155,4 +163,6 @@ def test_enfermedad_terminal():
         "dias_sintomas": 75,
         "dolor": 9,
     }
-    assert predecir_estado(datos) == "ENFERMEDAD TERMINAL"
+    estado = predecir_estado(datos)
+    assert estado == "ENFERMEDAD TERMINAL"
+    registrar_prediccion(estado, datos)
