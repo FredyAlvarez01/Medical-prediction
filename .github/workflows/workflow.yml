@@ -11,7 +11,6 @@ on:
 
   workflow_dispatch:
 
-# CORREGIDO: 'jobs' ahora está completamente alineado a la izquierda (sin espacios)
 jobs:
   tests:
     runs-on: ubuntu-latest
