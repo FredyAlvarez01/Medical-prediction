@@ -14,7 +14,7 @@ Módulos importados:
 """
 
 from app import predecir_estado
-from utils.guardar_prediccion import registrar_prediccion
+from utils.guardar_prediccion import registrar_prediccion, cargar_historial
 
 def test_no_enfermo():
     """
@@ -42,8 +42,15 @@ def test_no_enfermo():
         "dolor": 0,
     }
     estado = predecir_estado(datos)
-    assert estado == "NO ENFERMO"
+    estado_esperado = "NO ENFERMO"
+    assert estado == estado_esperado
     registrar_prediccion(estado, datos)
+    ultimo_registro = cargar_historial()[-1]
+    # 6. COMPROBACIÓN FINAL: Validamos el estado y la consistencia de los datos guardados
+    assert ultimo_registro["estado"] == estado_esperado, (
+        f"Fallo en el chequeo de estadísticas. Se esperaba '{estado_esperado}' "
+        f"en el último registro, pero se encontró '{ultimo_registro['estado']}'"
+    )
 
 
 def test_enfermedad_leve():
@@ -72,9 +79,14 @@ def test_enfermedad_leve():
         "dolor": 3,
     }
     estado = predecir_estado(datos)
-    assert estado == "ENFERMEDAD LEVE"
+    estado_esperado = "ENFERMEDAD LEVE"
+    assert estado == estado_esperado
     registrar_prediccion(estado, datos)
-
+    ultimo_registro = cargar_historial()[-1]
+    assert ultimo_registro["estado"] == estado_esperado, (
+        f"Fallo en el chequeo de estadísticas. Se esperaba '{estado_esperado}' "
+        f"en el último registro, pero se encontró '{ultimo_registro['estado']}'"
+    )
 
 def test_enfermedad_aguda():
     """
@@ -102,9 +114,14 @@ def test_enfermedad_aguda():
         "dolor": 8,
     }
     estado = predecir_estado(datos)
-    assert estado == "ENFERMEDAD AGUDA"
+    estado_esperado = "ENFERMEDAD AGUDA"
+    assert estado == estado_esperado
     registrar_prediccion(estado, datos)
-
+    ultimo_registro = cargar_historial()[-1]
+    assert ultimo_registro["estado"] == estado_esperado, (
+        f"Fallo en el chequeo de estadísticas. Se esperaba '{estado_esperado}' "
+        f"en el último registro, pero se encontró '{ultimo_registro['estado']}'"
+    )
 
 def test_enfermedad_cronica():
     """
@@ -133,9 +150,14 @@ def test_enfermedad_cronica():
         "dolor": 5,
     }
     estado = predecir_estado(datos)
-    assert estado == "ENFERMEDAD CRÓNICA"
+    estado_esperado = "ENFERMEDAD CRÓNICA"
+    assert estado == estado_esperado
     registrar_prediccion(estado, datos)
-
+    ultimo_registro = cargar_historial()[-1]
+    assert ultimo_registro["estado"] == estado_esperado, (
+        f"Fallo en el chequeo de estadísticas. Se esperaba '{estado_esperado}' "
+        f"en el último registro, pero se encontró '{ultimo_registro['estado']}'"
+    )
 
 def test_enfermedad_terminal():
     """
@@ -164,5 +186,11 @@ def test_enfermedad_terminal():
         "dolor": 9,
     }
     estado = predecir_estado(datos)
-    assert estado == "ENFERMEDAD TERMINAL"
+    estado_esperado = "ENFERMEDAD TERMINAL"
+    assert estado == estado_esperado
     registrar_prediccion(estado, datos)
+    ultimo_registro = cargar_historial()[-1]
+    assert ultimo_registro["estado"] == estado_esperado, (      
+        f"Fallo en el chequeo de estadísticas. Se esperaba '{estado_esperado}' "
+        f"en el último registro, pero se encontró '{ultimo_registro['estado']}'"
+    )
