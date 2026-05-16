@@ -1,7 +1,6 @@
 name: CI/CD Pipeline test
 
 on:
-
   pull_request:
     branches:
       - main
@@ -12,27 +11,25 @@ on:
 
   workflow_dispatch:
 
-  jobs:
+# CORREGIDO: 'jobs' ahora está completamente alineado a la izquierda (sin espacios)
+jobs:
+  tests:
+    runs-on: ubuntu-latest
 
-    tests:
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
 
-      runs-on: ubuntu-latest
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-      steps:
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
 
-        - name: Clonar repositorio
-          uses: actions/checkout@v4
-
-        - name: Instalar Python
-          uses: actions/setup-python@v5
-          with:
-            python-version: '3.11'
-
-        - name: Instalar dependencias
-          run: |
-            pip install -r requirements.txt
-            pip install pytest
-
-        - name: Ejecutar pruebas
-          run: |
-            pytest
+      - name: Ejecutar pruebas
+        run: |
+          pytest
