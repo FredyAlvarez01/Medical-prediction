@@ -11,6 +11,7 @@ el modelo de predicción clasifique segun las categorías definidas.
 
 Módulos importados:
     app: Módulo principal que contiene la función predecir_estado.
+    #### test 1: Validación de Predicción de Enfermedad Aguda
 """
 
 from app import predecir_estado

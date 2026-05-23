@@ -1,23 +1,26 @@
-name: CI/CD Pipeline test
+name: CI/CD Pipeline Autochain
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   issues: write
-  
+
 on:
   pull_request:
     branches:
       - main
-  workflow_dispatch: # Te permite seguir probándolo manualmente si quieres
+  workflow_dispatch:
 
 env:
+  # Asegura la compatibilidad con las directrices de GitHub Actions para 2026
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
-  tests:
+  # ======================================================================
+  # TRABAJO 1: VALIDACIÓN DEL PULL REQUEST
+  # ======================================================================
+  validate-pr:
     runs-on: ubuntu-latest
-
     steps:
       - name: Clonar repositorio
         uses: actions/checkout@v4
@@ -30,10 +33,9 @@ jobs:
       - name: Instalar dependencias
         run: |
           pip install -r requirements.txt
+          pip install pytest
 
-      # 1. Notificación de Inicio (Solo en Pull Requests)
       - name: Comentar inicio
-        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -44,16 +46,15 @@ jobs:
               body: 'CI/CD en acción. Ejecutando tareas …'
             })
 
-      # 2. Ejecución del bloque de pruebas de pytest
-      - name: Ejecutar pruebas
+      - name: Ejecutar pruebas iniciales
         env:
           PYTHONPATH: .
         run: |
           pytest
 
-      # 3. Notificación de Éxito Final (Solo en PR)
-      - name: Comentar éxito final
-        if: success() && github.event_name == 'pull_request'
+      # Tarjeta de éxito en la conversación del PR (Corregido el '#' faltante)
+      - name: Comentar éxito inicial
+        if: success()
         uses: actions/github-script@v7
         with:
           script: |
@@ -63,3 +64,35 @@ jobs:
               repo: context.repo.repo,
               body: 'CI/CD terminado con éxito.'
             })
+
+  # ======================================================================
+  # TRABAJO 2: RE-VERIFICACIÓN AUTOMÁTICA (Corre solo si el Trabajo 1 pasa)
+  # ======================================================================
+  re-verification:
+    runs-on: ubuntu-latest
+    needs: validate-pr # Hace que este bloque espere al de arriba automáticamente
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Re-ejecutar pruebas unitarias (Validación final)
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest
+
+      - name: Generar reporte de ejecución final
+        if: success()
+        run: |
+          echo "## 🚀 Verificación Automática Terminada" >> $GITHUB_STEP_SUMMARY
+          echo "El segundo bloque de pruebas ha concluido inmediatamente después de la validación." >> $GITHUB_STEP_SUMMARY
