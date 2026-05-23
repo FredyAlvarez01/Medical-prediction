@@ -1,0 +1,55 @@
+name: Auto PR Creator
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+
+  crear-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ==========================================================
+      # CLONAR REPOSITORIO
+      # ==========================================================
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      # ==========================================================
+      # CREAR PR SI NO EXISTE
+      # ==========================================================
+      - name: Crear Pull Request automático
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+
+          echo "Verificando si ya existe un PR..."
+
+          PR_EXISTE=$(gh pr list \
+            --head ${{ github.ref_name }} \
+            --base main \
+            --json number \
+            --jq 'length')
+
+          if [ "$PR_EXISTE" -eq "0" ]; then
+
+            echo "No existe PR. Creando..."
+
+            gh pr create \
+              --title "PR automático: ${{ github.ref_name }}" \
+              --body "Pull Request creado automáticamente por el pipeline CI/CD." \
+              --base main \
+              --head ${{ github.ref_name }}
+
+          else
+
+            echo "El PR ya existe."
+
+          fi

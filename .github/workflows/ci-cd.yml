@@ -1,0 +1,155 @@
+name: CI/CD Pipeline
+
+on:
+
+  # ==========================================================
+  # EVENTO 1 -> PR HACIA MAIN
+  # ==========================================================
+  pull_request:
+    branches:
+      - main
+
+  # ==========================================================
+  # EVENTO 2 -> PUSH A MAIN
+  # ==========================================================
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+
+  # ==========================================================
+  # EVENTO 1: VALIDACIÓN DE PR
+  # ==========================================================
+  pr-ci:
+
+    if: github.event_name == 'pull_request'
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ==========================================================
+      # CLONAR REPOSITORIO
+      # ==========================================================
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ==========================================================
+      # CONFIGURAR PYTHON
+      # ==========================================================
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # ==========================================================
+      # INSTALAR DEPENDENCIAS
+      # ==========================================================
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      # ==========================================================
+      # COMENTARIO INICIAL
+      # ==========================================================
+      - name: Comentar inicio CI/CD
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment \
+          ${{ github.event.pull_request.number }} \
+          --body "CI/CD en acción. Ejecutando tareas …"
+
+      # ==========================================================
+      # EJECUTAR PRUEBAS UNITARIAS
+      # ==========================================================
+      - name: Ejecutar pruebas unitarias
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -v
+
+      # ==========================================================
+      # COMENTARIO FINAL
+      # ==========================================================
+      - name: Comentar éxito CI/CD
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment \
+          ${{ github.event.pull_request.number }} \
+          --body "CI/CD terminado con éxito."
+
+      # ==========================================================
+      # MERGE AUTOMÁTICO
+      # ==========================================================
+      - name: Merge automático del PR
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge \
+          ${{ github.event.pull_request.number }} \
+          --squash \
+          --delete-branch=false
+
+  # ==========================================================
+  # EVENTO 2: VALIDACIÓN POST-MERGE EN MAIN
+  # ==========================================================
+  main-ci:
+
+    if: github.event_name == 'push'
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ==========================================================
+      # CLONAR REPOSITORIO
+      # ==========================================================
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      # ==========================================================
+      # CONFIGURAR PYTHON
+      # ==========================================================
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # ==========================================================
+      # INSTALAR DEPENDENCIAS
+      # ==========================================================
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      # ==========================================================
+      # RE-EJECUTAR TESTS EN MAIN
+      # ==========================================================
+      - name: Ejecutar pruebas unitarias en main
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -v
+
+      # ==========================================================
+      # REPORTE FINAL
+      # ==========================================================
+      - name: Reporte final
+        run: |
+          echo "## 🚀 Verificación Final en Main Exitosa" >> $GITHUB_STEP_SUMMARY
