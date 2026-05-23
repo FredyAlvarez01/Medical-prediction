@@ -12,6 +12,7 @@ on:
   workflow_dispatch:
 
 env:
+  # Asegura la compatibilidad con las directrices de GitHub Actions para 2026
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
@@ -51,7 +52,7 @@ jobs:
         run: |
           pytest
 
-       Tarjeta de éxito en la conversación del PR
+      # Tarjeta de éxito en la conversación del PR (Corregido el '#' faltante)
       - name: Comentar éxito inicial
         if: success()
         uses: actions/github-script@v7
@@ -69,7 +70,7 @@ jobs:
   # ======================================================================
   re-verification:
     runs-on: ubuntu-latest
-    needs: validate-pr # <-- ESTA LÍNEA OBLIGA A SEGUIR LA SECUENCIA AUTOMÁTICAMENTE
+    needs: validate-pr # Hace que este bloque espere al de arriba automáticamente
     steps:
       - name: Clonar repositorio
         uses: actions/checkout@v4
