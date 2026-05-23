@@ -1,4 +1,5 @@
 name: CI/CD Pipeline Autochain
+
 on:
   push:
     branches:
@@ -66,11 +67,11 @@ jobs:
             let prNumber;
 
             if (existing.data.length > 0) {
-              // Si ya existe, el número viene directo en el objeto de la lista
+              // Si ya existe en la lista, se extrae directo
               prNumber = existing.data[0].number;
-              console.log(`PR existente encontrado: #${prNumber}`);
+              console.log(`PR existente: #${prNumber}`);
             } else {
-              // Si es nuevo, el número viene dentro del objeto .data de la respuesta de creación
+              // Si es nuevo, se extrae de la propiedad data de la creación
               const newPr = await github.rest.pulls.create({
                 owner,
                 repo,
@@ -80,11 +81,12 @@ jobs:
                 body: "Creado automáticamente desde GitHub Actions"
               });
               prNumber = newPr.data.number;
-              console.log(`Nuevo PR creado con éxito: #${prNumber}`);
+              console.log(`PR creado: #${prNumber}`);
             }
 
-            // Aquí envías la variable estandarizada al output global
+            // Guardas la variable estandarizada sin importar el origen
             core.setOutput("pr_number", prNumber);
+
       # =========================================================
       # COMENTARIO INICIO
       # =========================================================
@@ -195,6 +197,7 @@ jobs:
       - name: Instalar dependencias
         run: |
           pip install -r requirements.txt
+          pip install pytest
 
       - name: Ejecutar tests en main
         env:
@@ -203,4 +206,4 @@ jobs:
 
       - name: Reporte final
         run: |
-          echo "##  Verificación Final en Main Exitosa" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Verificación Final en Main Exitosa" >> $GITHUB_STEP_SUMMARY
