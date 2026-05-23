@@ -10,7 +10,6 @@ permissions:
   pull-requests: write
 
 jobs:
-
   # =========================================================
   # 1. TESTS
   # =========================================================
@@ -86,7 +85,7 @@ jobs:
 
     steps:
       - name: Debug PR number
-        run: echo "PR NUMBER: ${{ needs.create-pr.outputs.pr_number }}"
+        run: echo "PR NUMBER ${{ needs.create-pr.outputs.pr_number }}"
 
       - name: Merge PR
         uses: actions/github-script@v7
