@@ -9,13 +9,9 @@ on:
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  workflow_dispatch: # Te permite seguir probándolo manualmente si quieres
 
 env:
-  # Asegura la compatibilidad con las directrices de GitHub Actions para 2026
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
@@ -34,7 +30,6 @@ jobs:
       - name: Instalar dependencias
         run: |
           pip install -r requirements.txt
-          pip install pytest
 
       # 1. Notificación de Inicio (Solo en Pull Requests)
       - name: Comentar inicio
@@ -56,7 +51,7 @@ jobs:
         run: |
           pytest
 
-      # 3. NUEVO REQUISITO: Notificación de Éxito Final (Solo en PR y si los pasos previos salieron bien)
+      # 3. Notificación de Éxito Final (Solo en PR)
       - name: Comentar éxito final
         if: success() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
