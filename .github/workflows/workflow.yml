@@ -27,7 +27,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Ejecutar tests
-        run: pytest -v
+        run: pytest
 
   # =========================================================
   # 2. CREAR PR
