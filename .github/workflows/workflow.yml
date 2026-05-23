@@ -1,26 +1,32 @@
-name: CI/CD Pipeline Autochain
-
-on:
-  push:
-    branches:
-      - anadir-github-actions
+name: CI/CD Pipeline
 
 permissions:
   contents: write
   pull-requests: write
   issues: write
 
+on:
+  pull_request:
+    branches:
+      - main
+
+  push:
+    branches:
+      - main
+
 jobs:
-  pipeline-automatico:
+
+  # ==========================================================
+  # EVENTO 1: PR HACIA MAIN
+  # ==========================================================
+  pruebas-pr:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+
     steps:
-      # ======================================================================
-      # 1. PREPARACIÓN DEL ENTORNO
-      # ======================================================================
+
       - name: Clonar repositorio
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Descarga todo el historial para poder hacer el merge local limpio
 
       - name: Configurar Python
         uses: actions/setup-python@v5
@@ -32,54 +38,50 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest
 
-      # ======================================================================
-      # 2. EVENTO 1: GESTIÓN DE PR, COMENTARIOS Y PRUEBAS INICIALES
-      # ======================================================================
-      - name: Crear o buscar PR y Comentar Inicio
-        id: pr_fase
+      - name: Comentar inicio CI/CD
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Crea el PR si no existe, o recupera el número si ya está abierto
-          PR_URL=$(gh pr create --title "PR automático" --body "Creado por el pipeline" --base main --head anadir-github-actions 2>&1 || gh pr list --head anadir-github-actions --json url --jq '.[0].url')
-          PR_NUM=$(echo "$PR_URL" | grep -oE '[0-9]+$' | tail -n1)
-          echo "pr_number=$PR_NUM" >> $GITHUB_OUTPUT
-          
-          # REQUISITO: Comentario de inicio exigido
-          gh pr comment $PR_NUM --body "CI/CD en acción. Ejecutando tareas …"
+          gh pr comment ${{ github.event.pull_request.number }} \
+          --body "CI/CD en acción. Ejecutando tareas …"
 
-      - name: Ejecutar pruebas unitarias (Validación Previa)
+      - name: Ejecutar pruebas unitarias
         env:
           PYTHONPATH: .
         run: pytest -v
 
-      - name: Comentar éxito en el PR
+      - name: Comentar éxito CI/CD
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr comment ${{ steps.pr_fase.outputs.pr_number }} --body "CI/CD terminado con éxito."
-
-      # ======================================================================
-      # 3. TRANSICIÓN: FUSIÓN DE CÓDIGO AUTOMÁTICA
-      # ======================================================================
-      - name: Merge automático del PR
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr merge ${{ steps.pr_fase.outputs.pr_number }} --squash --delete-branch=false
-
-      # ======================================================================
-      # 4. EVENTO 2: VERIFICACIÓN POST-MERGE EN PRODUCCIÓN (MAIN)
-      # ======================================================================
-      - name: Cambiar a rama Main (Código fusionado)
         run: |
-          git fetch origin main
-          git checkout main
-          git pull origin main
+          gh pr comment ${{ github.event.pull_request.number }} \
+          --body "CI/CD terminado con éxito."
 
-      - name: Re-ejecutar pruebas unitarias en Main (Control de calidad)
+
+  # ==========================================================
+  # EVENTO 2: PUSH A MAIN
+  # ==========================================================
+  pruebas-main:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      - name: Re-ejecutar pruebas en main
         env:
           PYTHONPATH: .
         run: pytest -v
-
-      - name: Reporte Final
-        run: echo "## 🚀 Verificación Final en Main Exitosa" >> $GITHUB_STEP_SUMMARY
