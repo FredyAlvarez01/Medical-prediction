@@ -220,14 +220,14 @@ jobs:
       # =========================================================
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}:latest .
+          docker build -t ghcr.io/fredyalvarez01/medical-prediction:latest .
 
       # =========================================================
       # PUBLICAR IMAGEN EN GITHUB PACKAGES
       # =========================================================
       - name: Push Docker image
         run: |
-          docker push ghcr.io/${{ github.repository }}:latest
+          docker push ghcr.io/fredyalvarez01/medical-prediction:latest
 
       - name: Reporte final
         run: |
