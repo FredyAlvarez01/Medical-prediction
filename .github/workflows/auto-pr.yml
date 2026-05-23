@@ -1,5 +1,4 @@
 name: CI/CD Pipeline Autochain
-
 on:
   push:
     branches:
