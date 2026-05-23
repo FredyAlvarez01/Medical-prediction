@@ -3,3 +3,4 @@
 ### test 3: Validación de Predicción de Enfermedad Leve
 ### test 4: Validación de Predicción de Paciente Sano
 ### test 5: Validación de Predicción de Paciente con Síntomas Leves pero Persistentes
+## test 6: Validación de Predicción de Paciente con Síntomas Graves pero de Onset Reciente
