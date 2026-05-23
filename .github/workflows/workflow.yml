@@ -31,7 +31,7 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      # REQUISITO: Crear o buscar el PR para poder comentarle encima
+      # CORREGIDO: Manejo robusto de extracción del número de PR
       - name: Crear o reutilizar PR
         id: gestionar_pr
         uses: actions/github-script@v7
@@ -39,14 +39,29 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+            
             const existing = await github.rest.pulls.list({
               owner, repo, head: `${owner}:anadir-github-actions`, base: "main", state: "open"
             });
-            let pr = existing.data.length > 0 ? existing.data[0] : await github.rest.pulls.create({
-              owner, repo, title: "PR automático anadir-github-actions → main",
-              head: "anadir-github-actions", base: "main", body: "Creado automáticamente por el pipeline."
-            });
-            core.setOutput("pr_number", pr.number);
+            
+            let prNumber;
+            
+            if (existing.data.length > 0) {
+              // Si ya existe, extraemos el número directamente del elemento de la lista
+              prNumber = existing.data[0].number;
+              console.log(`PR existente encontrado: #${prNumber}`);
+            } else {
+              // Si no existe, lo creamos y extraemos desde pr.data.number
+              const newPr = await github.rest.pulls.create({
+                owner, repo, title: "PR automático anadir-github-actions → main",
+                head: "anadir-github-actions", base: "main", body: "Creado automáticamente por el pipeline."
+              });
+              prNumber = newPr.data.number;
+              console.log(`Nuevo PR creado con éxito: #${prNumber}`);
+            }
+            
+            // Enviamos el output limpio al entorno global del job
+            core.setOutput("pr_number", prNumber);
 
       # REQUISITO: Comentario de INICIO exigido por la rúbrica
       - name: Comentar inicio en el PR
@@ -55,14 +70,15 @@ jobs:
           PR_NUMBER: ${{ steps.gestionar_pr.outputs.pr_number }}
         with:
           script: |
+            const prNum = Number(process.env.PR_NUMBER);
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: Number(process.env.PR_NUMBER),
+              issue_number: prNum,
               body: "CI/CD en acción. Ejecutando tareas …"
             });
 
-      # REQUISITO: Ejecución de las pruebas unitarias (Al menos 2 casos evaluados)
+      # REQUISITO: Ejecución de las pruebas unitarias
       - name: Ejecutar pruebas unitarias (Fase PR)
         env:
           PYTHONPATH: .
@@ -76,10 +92,11 @@ jobs:
           PR_NUMBER: ${{ steps.gestionar_pr.outputs.pr_number }}
         with:
           script: |
+            const prNum = Number(process.env.PR_NUMBER);
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: Number(process.env.PR_NUMBER),
+              issue_number: prNum,
               body: "CI/CD terminado con éxito."
             });
 
@@ -96,10 +113,11 @@ jobs:
           PR_NUMBER: ${{ needs.evento-1-pr-validation.outputs.pr_number }}
         with:
           script: |
+            const prNum = Number(process.env.PR_NUMBER);
             await github.rest.pulls.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: Number(process.env.PR_NUMBER),
+              pull_number: prNum,
               merge_method: "squash"
             });
 
@@ -110,7 +128,6 @@ jobs:
     needs: execute-merge
     runs-on: ubuntu-latest
     steps:
-      # CAMBIO CRUCIAL: Descargamos MAIN para validar el código unificado de producción
       - uses: actions/checkout@v4
         with:
           ref: main
@@ -125,7 +142,6 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      # REQUISITO: Re-verificación lógica final en la rama main existente
       - name: Re-ejecutar pruebas unitarias en Main (Control de calidad)
         env:
           PYTHONPATH: .
