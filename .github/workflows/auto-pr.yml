@@ -63,12 +63,15 @@ jobs:
               state: "open"
             });
 
-            let pr;
+            let prNumber;
 
             if (existing.data.length > 0) {
-              pr = existing.data[0];
+              // Si ya existe, el número viene directo en el objeto de la lista
+              prNumber = existing.data[0].number;
+              console.log(`PR existente encontrado: #${prNumber}`);
             } else {
-              pr = await github.rest.pulls.create({
+              // Si es nuevo, el número viene dentro del objeto .data de la respuesta de creación
+              const newPr = await github.rest.pulls.create({
                 owner,
                 repo,
                 title: "PR automático anadir-github-actions → main",
@@ -76,10 +79,12 @@ jobs:
                 base: "main",
                 body: "Creado automáticamente desde GitHub Actions"
               });
+              prNumber = newPr.data.number;
+              console.log(`Nuevo PR creado con éxito: #${prNumber}`);
             }
 
-            core.setOutput("pr_number", pr.data.number);
-
+            // Aquí envías la variable estandarizada al output global
+            core.setOutput("pr_number", prNumber);
       # =========================================================
       # COMENTARIO INICIO
       # =========================================================
@@ -190,7 +195,6 @@ jobs:
       - name: Instalar dependencias
         run: |
           pip install -r requirements.txt
-          pip install pytest
 
       - name: Ejecutar tests en main
         env:
@@ -199,4 +203,4 @@ jobs:
 
       - name: Reporte final
         run: |
-          echo "## 🚀 Verificación Final en Main Exitosa" >> $GITHUB_STEP_SUMMARY
+          echo "##  Verificación Final en Main Exitosa" >> $GITHUB_STEP_SUMMARY
