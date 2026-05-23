@@ -77,9 +77,9 @@ jobs:
             core.setOutput("pr_number", pr.data.number);
 
   # =========================================================
-  # 3. TEST EN PR (RE-EJECUCIÓN REAL)
+  # 3. MERGE
   # =========================================================
-  tests-pr:
+  merge-pr:
     needs: create-pr
     runs-on: ubuntu-latest
 
@@ -99,14 +99,6 @@ jobs:
           PYTHONPATH: .
         run: pytest -v
 
-  # =========================================================
-  # 3. MERGE
-  # =========================================================
-  merge-pr:
-    needs: tests-pr
-    runs-on: ubuntu-latest
-
-    steps:
       - name: Debug PR number
         run: echo "PR NUMBER ${{ needs.create-pr.outputs.pr_number }}"
 
