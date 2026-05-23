@@ -3,7 +3,7 @@ name: CI/CD Pipeline Autochain
 on:
   pull_request:
     branches:
-      - añadir-github-actions
+      - anadir-github-actions
 
   workflow_dispatch:
 
