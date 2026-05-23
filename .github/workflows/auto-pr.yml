@@ -85,7 +85,7 @@ jobs:
               console.log(`PR creado: #${prNumber}`);
             }
 
-            // Guardas la variable estandarizada sin importar el origen
+            // Guardas la variable estandarizada sin importar el origen ###############
             core.setOutput("pr_number", prNumber);
 
       # =========================================================
