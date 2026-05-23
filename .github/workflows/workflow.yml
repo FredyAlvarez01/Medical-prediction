@@ -77,10 +77,30 @@ jobs:
             core.setOutput("pr_number", pr.data.number);
 
   # =========================================================
+  # 3. TEST EN PR (RE-EJECUCIÓN REAL)
+  # =========================================================
+  tests-pr:
+    needs: create-pr
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: anadir-github-actions # 👈 CLAVE
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install -r requirements.txt
+
+      - run: pytest -v
+
+  # =========================================================
   # 3. MERGE
   # =========================================================
   merge-pr:
-    needs: create-pr
+    needs: tests-pr
     runs-on: ubuntu-latest
 
     steps:
