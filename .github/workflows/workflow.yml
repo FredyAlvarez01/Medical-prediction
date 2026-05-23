@@ -1,21 +1,20 @@
 name: CI/CD Pipeline Autochain
 
 on:
-  pull_request:
+  push:
     branches:
       - anadir-github-actions
-
-  workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  # ======================================================================
-  # TRABAJO 1: VALIDACIÓN DEL PULL REQUEST
-  # ======================================================================
-  tests-pr:
+
+  # =========================================================
+  # 1. TESTS
+  # =========================================================
+  tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,78 +25,70 @@ jobs:
           python-version: "3.11"
 
       - name: Instalar dependencias
-        run: |
-          pip install -r requirements.txt
-          pip install pytest
+        run: pip install -r requirements.txt
 
-      - run: pytest -v
-
-      - name: Comentar inicio
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: 'CI/CD en acción. Ejecutando tareas …'
-            })
-
-      - name: Ejecutar pruebas iniciales
+      - name: Ejecutar tests
         env:
           PYTHONPATH: .
-        run: |
-          pytest
+        run: pytest -v
 
-      # Tarjeta de éxito en la conversación del PR (Corregido el '#' faltante)
-      - name: Comentar éxito inicial
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: 'CI/CD terminado con éxito.'
-            })
-
+  # =========================================================
+  # 2. CREAR PR
+  # =========================================================
   create-pr:
-    needs: tests-pr
+    needs: tests
     runs-on: ubuntu-latest
 
     outputs:
-      pr_number: ${{ steps.create_pr.outputs.pr_number }}
+      pr_number: ${{ steps.pr.outputs.pr_number }}
 
     steps:
-      - name: Crear Pull Request
-        id: create_pr
+      - name: Crear PR
+        id: pr
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            try {
-              const pr = await github.rest.pulls.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: 'PR automático action -> main',
-                head: 'action',
-                base: 'main',
-                body: 'Creado automáticamente desde GitHub Actions'
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const existing = await github.rest.pulls.list({
+              owner,
+              repo,
+              head: `${owner}:anadir-github-actions`,
+              base: "main",
+              state: "open"
+            });
+
+            let pr;
+
+            if (existing.data.length > 0) {
+              pr = existing.data[0];
+            } else {
+              pr = await github.rest.pulls.create({
+                owner,
+                repo,
+                title: "PR automático anadir-github-actions → main",
+                head: "anadir-github-actions",
+                base: "main",
+                body: "Creado automáticamente desde GitHub Actions"
               });
-
-              core.setOutput("pr_number", pr.data.number);
-
-            } catch (error) {
-              core.setFailed(error.message);
             }
 
+            core.setOutput("pr_number", pr.data.number);
+
+  # =========================================================
+  # 3. MERGE
+  # =========================================================
   merge-pr:
     needs: create-pr
     runs-on: ubuntu-latest
 
     steps:
-      - name: Merge Pull Request
+      - name: Debug PR
+        run: echo "PR NUMBER: ${{ needs.create-pr.outputs.pr_number }}"
+
+      - name: Merge PR
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -105,13 +96,17 @@ jobs:
             const prNumber = Number("${{ needs.create-pr.outputs.pr_number }}");
 
             if (!prNumber) {
-              core.setFailed("No se encontró PR para mergear");
+              core.setFailed("No se encontró PR");
               return;
             }
 
-            await github.rest.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: prNumber,
-              merge_method: 'squash'
-            });
+            try {
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                merge_method: "squash"
+              });
+            } catch (e) {
+              core.setFailed("Merge falló: " + e.message);
+            }
