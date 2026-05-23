@@ -10,7 +10,6 @@ permissions:
   pull-requests: write
 
 jobs:
-
   # =========================================================
   # 1. TESTS
   # =========================================================
@@ -43,7 +42,7 @@ jobs:
       pr_number: ${{ steps.pr.outputs.pr_number }}
 
     steps:
-      - name: Crear PR
+      - name: Crear o reutilizar PR
         id: pr
         uses: actions/github-script@v7
         with:
@@ -85,15 +84,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Debug PR
-        run: echo "PR NUMBER: ${{ needs.create-pr.outputs.pr_number }}"
+      - name: Debug PR number
+        run: echo "PR NUMBER ${{ needs.create-pr.outputs.pr_number }}"
 
       - name: Merge PR
         uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ needs.create-pr.outputs.pr_number }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = Number("${{ needs.create-pr.outputs.pr_number }}");
+            const prNumber = Number(process.env.PR_NUMBER);
 
             if (!prNumber) {
               core.setFailed("No se encontró PR");
