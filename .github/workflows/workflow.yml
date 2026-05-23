@@ -1,7 +1,7 @@
 name: CI/CD Pipeline Autochain
 
 on:
-  pull_request:
+  push:
     branches:
       - anadir-github-actions
 
